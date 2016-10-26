@@ -15,25 +15,29 @@ import com.kilobolt.framework.implementation.AndroidGame;
 
 
 public class GameScreen extends Screen {
-    enum GameState {
+    private enum GameState {
         Ready, Running, Paused, GameOver
     }
 
-    GameState state = GameState.Ready;
+    private GameState state = GameState.Ready;
 
     // Variable Setup
     // You would create game objects here.
 
-    Graphics g = game.getGraphics();
+    private Graphics g = game.getGraphics();
 
-    int livesLeft = 1;
-    Paint paint;
+    private int livesLeft = 1;
+    private Paint paint;
 
-    float fps = 0;
+    private float fps           = 0;
+    private int   frame         = 0;
+    private long  lastmillis    = System.currentTimeMillis();
+    private long  lastfpsupdate = 0;
 
-    int  frame         = 0;
-    long lastmillis    = System.currentTimeMillis();
-    long lastfpsupdate = 0;
+    private long lastPaused = 0;
+    private long lastResumed = 0;
+
+    private int stateChangeDelay = 50;
 
     public GameScreen(Game game) {
         super(game);
@@ -43,6 +47,8 @@ public class GameScreen extends Screen {
         paint.setColor(Color.WHITE);
         paint.setAntiAlias(true);
         paint.setTextSize(24);
+
+        Assets.music.play();
 
     }
 
@@ -74,7 +80,6 @@ public class GameScreen extends Screen {
             lastfpsupdate = newmillis;
         }
         frame++;
-        g.drawString("frame: " + frame + "\nfps: " + String.format("%.1f", fps), g.getWidth() / 64, g.getHeight() / 32, paint);
         lastmillis = newmillis;
     }
 
@@ -125,20 +130,22 @@ public class GameScreen extends Screen {
 
             if (event.type == TouchEvent.TOUCH_UP) {
 
-                // check quit button
-                if(inBounds(event, g.getWidth() * 7 / 8, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8)) {
-                    // nullify();
-                    dispose();
+                if(inBounds(event, 0, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8)) {
+                    // pause button
+                    if(System.currentTimeMillis() - lastResumed > stateChangeDelay) {
+                        pause();
+                    }
+                } else if(inBounds(event, g.getWidth() * 7 / 8, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8)) {
+                    // back button
+                    pause();
                     game.setScreen(new MainMenuScreen(game));
                 }
 
-                if (event.x <= g.getWidth() / 2) {
+                /* else if (event.x <= g.getWidth() / 2) {
                     // Stop moving left.
-                }
-
-                else if (event.x > g.getWidth() / 2) {
+                } else if (event.x > g.getWidth() / 2) {
                     // Stop moving right. }
-                }
+                } */
             }
         }
         // 2. Check miscellaneous events like death:
@@ -157,7 +164,18 @@ public class GameScreen extends Screen {
         for (int i = 0; i < len; i++) {
             TouchEvent event = touchEvents.get(i);
             if (event.type == TouchEvent.TOUCH_UP) {
-
+                if(inBounds(event, 0, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8)) {
+                    // resume button
+                    if(System.currentTimeMillis() - lastPaused >= stateChangeDelay) {
+                        resume();
+                    }
+                } else if(inBounds(event, g.getWidth() * 7 / 16, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8)) {
+                    // menu button
+                    game.setScreen(new MainMenuScreen(game));
+                } else if(inBounds(event, g.getWidth() * 7 / 8, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8)) {
+                    // quit button
+                    android.os.Process.killProcess(android.os.Process.myPid());
+                }
             }
         }
     }
@@ -198,6 +216,8 @@ public class GameScreen extends Screen {
         if (state == GameState.GameOver)
             drawGameOverUI();
 
+        g.drawString("frame: " + frame + "\nfps: " + String.format("%.1f", fps) + "\nstate: " + state.name(), g.getWidth() / 64, g.getHeight() / 32, paint);
+
     }
 
     private void nullify() {
@@ -228,16 +248,37 @@ public class GameScreen extends Screen {
         p.setTextAlign(Paint.Align.CENTER);
         p.setColor(Color.WHITE);
 
+        // make pause button
+        g.drawRect(0, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8, Color.BLUE);
+        g.drawString("PAUSE", (0 + g.getWidth() / 8) / 2, (g.getHeight() * 7 / 8 + g.getHeight()) / 2, p);
+
         // make back button
         g.drawRect(g.getWidth() * 7 / 8, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8, Color.RED);
         g.drawString("BACK", (g.getWidth() * 7 / 8 + g.getWidth()) / 2, (g.getHeight() * 7 / 8 + g.getHeight()) / 2, p);
-
     }
 
     private void drawPausedUI() {
         Graphics g = game.getGraphics();
         // Darken the entire screen so you can display the Paused screen.
         g.drawARGB(155, 0, 0, 0);
+
+        Paint p = new Paint();
+        p.setTextSize(48);
+        p.setAntiAlias(true);
+        p.setTextAlign(Paint.Align.CENTER);
+        p.setColor(Color.WHITE);
+
+        // make resume button
+        g.drawRect(0, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8, Color.BLUE);
+        g.drawString("RESUME", (0 + g.getWidth() / 8) / 2, (g.getHeight() * 7 / 8 + g.getHeight()) / 2, p);
+
+        // make quit button
+        g.drawRect(g.getWidth() * 7 / 8, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8, Color.RED);
+        g.drawString("QUIT", (g.getWidth() * 7 / 8 + g.getWidth()) / 2, (g.getHeight() * 7 / 8 + g.getHeight()) / 2, p);
+
+        // make menu button
+        g.drawRect(g.getWidth() * 7 / 16, g.getHeight() * 7 / 8, g.getWidth() / 8, g.getHeight() / 8, Color.BLACK);
+        g.drawString("MENU", (g.getWidth() * 7 / 16 + g.getWidth() * 9 / 16) / 2, (g.getHeight() * 7 / 8 + g.getHeight()) / 2, p);
 
     }
 
@@ -250,14 +291,20 @@ public class GameScreen extends Screen {
 
     @Override
     public void pause() {
-        if (state == GameState.Running)
-            state = GameState.Paused;
+        state = GameState.Paused;
+        lastPaused = System.currentTimeMillis();
 
+        Assets.music.pause();
     }
 
     @Override
     public void resume() {
+        if(state == GameState.Paused) {
+            state = GameState.Running;
+        }
+        lastResumed = System.currentTimeMillis();
 
+        Assets.music.play();
     }
 
     @Override
@@ -267,8 +314,7 @@ public class GameScreen extends Screen {
 
     @Override
     public void backButton() {
-        // nullify();
-        dispose();
+        pause();
         game.setScreen(new MainMenuScreen(game));
     }
 }

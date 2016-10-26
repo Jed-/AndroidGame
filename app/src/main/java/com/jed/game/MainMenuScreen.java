@@ -31,7 +31,7 @@ public class MainMenuScreen extends Screen {
                         game.setScreen(new GameScreen(game));
                     } else if(inBounds(event, g.getWidth() * 3 / 4, 0, g.getWidth() / 4, g.getHeight() / 4)) {
                         // QUIT
-                        System.exit(0);
+                        android.os.Process.killProcess(android.os.Process.myPid());
                     }
                 }
             } catch(Exception e) {
