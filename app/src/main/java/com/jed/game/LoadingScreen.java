@@ -23,7 +23,11 @@ public class LoadingScreen extends Screen {
         Assets.music = game.getAudio().createMusic("music.mp3");
         Assets.music.setLooping(true);
         Assets.music.setVolume(0.85f);
-        // Assets.music.play(); - don't start playing yet, only do it in-game
+
+        // load textures
+        Assets.dirt = game.getGraphics().newImage("textures/terrain_dirt.png", Graphics.ImageFormat.RGB565);
+        Assets.none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565);
+        Assets.player = game.getGraphics().newImage("sprites/player_left.png", ImageFormat.ARGB4444);
 
         game.setScreen(new MainMenuScreen(game));
     }

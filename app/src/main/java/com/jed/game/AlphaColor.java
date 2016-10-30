@@ -3,13 +3,8 @@ package com.jed.game;
 import android.graphics.Color;
 
 public class AlphaColor {
-    private static final int opacity = 0x88;
-    private static int mktrans(int color) {
-        return color | (opacity << 24);
-    }
-    static int red   = mktrans(Color.RED);
-    static int green = mktrans(Color.GREEN);
-    static int blue  = mktrans(Color.BLUE);
-
-    static int white = mktrans(Color.WHITE);
+    static int red   = 0x88FF0000;
+    static int green = 0x8800FF00;
+    static int blue  = 0x880000FF;
+    static int white = 0x88FFFFFF;
 }

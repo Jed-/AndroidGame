@@ -7,6 +7,7 @@ import android.graphics.Paint;
 
 import com.kilobolt.framework.Game;
 import com.kilobolt.framework.Graphics;
+import com.kilobolt.framework.Image;
 import com.kilobolt.framework.Screen;
 import com.kilobolt.framework.Input.TouchEvent;
 
@@ -35,7 +36,7 @@ public class GameScreen extends Screen {
     private long lastResumed = 0;
 
     // to avoid resuming immediately after pausing, like, in the same frame
-    private int stateChangeDelay = 1;
+    private int stateChangeDelay = 20;
 
     public GameScreen(Game game) {
         super(game);
@@ -129,12 +130,12 @@ public class GameScreen extends Screen {
 
             if (event.type == TouchEvent.TOUCH_UP) {
 
-                if(Util.inBoundsRel(event, 0, 0.875, 0.125, 0.125)) {
-                    // pause button
-                    if(System.currentTimeMillis() - lastResumed > stateChangeDelay) {
-                        pause();
-                    }
-                }
+//                if(Util.inBoundsRel(event, 0, 0.875, 0.125, 0.125)) {
+//                    // pause button
+//                    if(System.currentTimeMillis() - lastResumed > stateChangeDelay) {
+//                        pause();
+//                    }
+//                }
 
                 // game controls released
                 /* else if (event.x <= g.getWidth() / 2) {
@@ -192,11 +193,51 @@ public class GameScreen extends Screen {
 
     }
 
+    // test
+    private int posx = 4, posy = 4;
+    private final int grid_cols = 32;
+    private int cell_size = g.getWidth() / grid_cols;
+    private final int grid_rows = (int)Math.ceil(g.getHeight() / cell_size);
+
+    private int posx_shown = grid_cols / 2;
+    private int posy_shown = grid_rows / 2;
+
+    private void draw_cell(int x, int y, Image terrain) {
+        g.drawScaledImageRel(terrain, (double)x / (double)grid_cols, (double)y / (double)grid_rows, 1.0 / (double)grid_cols, 1.0 / (double)grid_rows, 0, 0, 152, 152);
+    }
+
+    private void draw_item(int x, int y, int width, int height, Image image) {
+        if(Math.abs(x - posx) > grid_cols / 2 || Math.abs(y - posy) > grid_rows / 2) {
+            return;
+        }
+        double x_factor = 1, y_factor = 1;
+        if(width > height) {
+            y_factor = (double)height / (double)width;
+        } else if(width < height) {
+            x_factor = (double)width / (double)height;
+        }
+        g.drawScaledImageRel(image, (double)(posx_shown + x - posx) / (double)grid_cols, (double)(posy_shown + y - posy) / (double)grid_rows, x_factor / (double)grid_cols, y_factor / (double)grid_rows, 0, 0, width, height);
+    }
+
     @Override
     public void paint(float deltaTime) {
         Graphics g = game.getGraphics();
 
         // First draw the game elements.
+
+        // test
+        // draw map
+        for(int x = 0; x < grid_cols; x++) {
+            for(int y = 0; y < grid_rows; y++) {
+                if((x - posx_shown + posx) >= 0 && (x - posx_shown + posx) < 8 && (y - posy_shown + posy) >= 0 && (y - posy_shown + posy) < 8) {
+                    draw_cell(x, y, Assets.dirt);
+                } else {
+                    draw_cell(x, y, Assets.none);
+                }
+            }
+        }
+        // draw player
+        draw_item(posx, posy, 152, 115, Assets.player);
 
         // Example:
         // g.drawImage(Assets.background, 0, 0);
@@ -244,9 +285,9 @@ public class GameScreen extends Screen {
         p.setTextAlign(Paint.Align.CENTER);
         p.setColor(Color.WHITE);
 
-        // make pause button
-        g.drawRectRel(0, 0.875, 0.125, 0.125, AlphaColor.blue);
-        g.drawStringRel("PAUSE", (0 + 0.125) / 2, (0.875 + 1) / 2, p);
+//        // make pause button
+//        g.drawRectRel(0, 0.875, 0.125, 0.125, AlphaColor.blue);
+//        g.drawStringRel("PAUSE", (0 + 0.125) / 2, (0.875 + 1) / 2, p);
     }
 
     private void drawPausedUI() {
@@ -307,6 +348,5 @@ public class GameScreen extends Screen {
     @Override
     public void backButton() {
         pause();
-        game.setScreen(new MainMenuScreen(game));
     }
 }
