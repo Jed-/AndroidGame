@@ -26,30 +26,19 @@ public class MainMenuScreen extends Screen {
             try {
                 TouchEvent event = touchEvents.get(i);
                 if (event.type == TouchEvent.TOUCH_UP) {
-                    if (inBounds(event, 0, 0, g.getWidth() / 4, g.getHeight() / 4)) {
+                    if (Util.inBoundsRel(event, 0, 0, 0.25, 0.25)) {
                         // START GAME
                         game.setScreen(new GameScreen(game));
-                    } else if(inBounds(event, g.getWidth() * 3 / 4, 0, g.getWidth() / 4, g.getHeight() / 4)) {
+                    } else if(Util.inBoundsRel(event, 0.75, 0, 0.25, 0.25)) {
                         // QUIT
                         android.os.Process.killProcess(android.os.Process.myPid());
                     }
                 }
             } catch(Exception e) {
-                    // pass
+                    // zoom: pass
             }
         }
     }
-
-
-    private boolean inBounds(TouchEvent event, int x, int y, int width,
-                             int height) {
-        if (event.x > x && event.x < x + width - 1 && event.y > y
-                && event.y < y + height - 1)
-            return true;
-        else
-            return false;
-    }
-
 
     @Override
     public void paint(float deltaTime) {
@@ -68,12 +57,12 @@ public class MainMenuScreen extends Screen {
         p.setTextAlign(Paint.Align.CENTER);
 
         // make "PLAY" button
-        g.drawRect(0, 0, g.getWidth() / 4, g.getHeight() / 4, Color.BLUE);
-        g.drawString("PLAY", (0 + g.getWidth() / 4) / 2, (0 + g.getHeight() / 4) / 2, p);
+        g.drawRectRel(0, 0, 0.25, 0.25, Color.BLUE);
+        g.drawStringRel("PLAY", (0 + 0.25) / 2, (0 + 0.25) / 2, p);
 
         // make "QUIT" button
-        g.drawRect(g.getWidth() * 3 / 4, 0, g.getWidth() / 4, g.getHeight() / 4, Color.RED);
-        g.drawString("QUIT", (g.getWidth() * 3 / 4 + g.getWidth()) / 2, (0 + g.getHeight() / 4) / 2, p);
+        g.drawRectRel(0.75, 0, 0.25, 0.25, Color.RED);
+        g.drawStringRel("QUIT", (0.75 + 1) / 2, (0 + 0.25) / 2, p);
     }
 
 

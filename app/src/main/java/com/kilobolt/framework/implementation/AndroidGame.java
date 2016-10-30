@@ -38,8 +38,8 @@ public abstract class AndroidGame extends Activity implements Game {
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
 
         // always render at full-HD, no matter what actual resolution is
-        int frameBufferWidth = isPortrait ? 1080 : 1920;
-        int frameBufferHeight = isPortrait ? 1920 : 1080;
+        int frameBufferWidth = isPortrait ? FrameBufferSize.height : FrameBufferSize.width;
+        int frameBufferHeight = isPortrait ? FrameBufferSize.width : FrameBufferSize.height;
 
         Bitmap frameBuffer = Bitmap.createBitmap(frameBufferWidth, frameBufferHeight, Config.RGB_565);
 

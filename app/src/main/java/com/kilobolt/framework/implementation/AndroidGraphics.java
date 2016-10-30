@@ -89,10 +89,20 @@ public class AndroidGraphics implements Graphics {
     }
 
     @Override
+    public void drawLineRel(double x, double y, double x2, double y2, int color) {
+        drawLine((int)(getWidth() * x), (int)(getHeight() * y), (int)(getWidth() * x2), (int)(getHeight() * y2), color);
+    }
+
+    @Override
     public void drawRect(int x, int y, int width, int height, int color) {
         paint.setColor(color);
         paint.setStyle(Style.FILL);
         canvas.drawRect(x, y, x + width - 1, y + height - 1, paint);
+    }
+
+    @Override
+    public void drawRectRel(double x, double y, double width, double height, int color) {
+        drawRect((int)(getWidth() * x), (int)(getHeight() * y), (int)(getWidth() * width), (int)(getHeight() * height), color);
     }
 
     @Override
@@ -106,6 +116,12 @@ public class AndroidGraphics implements Graphics {
         canvas.drawText(text, x, y, paint);
     }
 
+    @Override
+    public void drawStringRel(String text, double x, double y, Paint paint) {
+        drawString(text, (int)(getWidth() * x), (int)(getHeight() * y), paint);
+    }
+
+    @Override
     public void drawImage(Image Image, int x, int y, int srcX, int srcY, int srcWidth, int srcHeight) {
         srcRect.left   = srcX;
         srcRect.top    = srcY;
@@ -121,11 +137,22 @@ public class AndroidGraphics implements Graphics {
     }
 
     @Override
-    public void drawImage(Image Image, int x, int y) {
-        canvas.drawBitmap(((AndroidImage) Image).bitmap, x, y, null);
+    public void drawImageRel(Image image, double x, double y, int srcX, int srcY, int srcWidth, int srcHeight) {
+        drawImage(image, (int)(getWidth() * x), (int)(getHeight() * y), srcX, srcY, srcWidth, srcHeight);
     }
 
-    public void drawScaledImage(Image Image, int x, int y, int width, int height, int srcX, int srcY, int srcWidth, int srcHeight) {
+    @Override
+    public void drawImage(Image image, int x, int y) {
+        canvas.drawBitmap(((AndroidImage) image).bitmap, x, y, null);
+    }
+
+    @Override
+    public void drawImageRel(Image image, double x, double y) {
+        drawImage(image, (int)(getWidth() * x), (int)(getHeight() * y));
+    }
+
+    @Override
+    public void drawScaledImage(Image image, int x, int y, int width, int height, int srcX, int srcY, int srcWidth, int srcHeight) {
         srcRect.left   = srcX;
         srcRect.top    = srcY;
         srcRect.right  = srcX + srcWidth;
@@ -136,7 +163,12 @@ public class AndroidGraphics implements Graphics {
         dstRect.right  = x + width;
         dstRect.bottom = y + height;
 
-        canvas.drawBitmap(((AndroidImage) Image).bitmap, srcRect, dstRect, null);
+        canvas.drawBitmap(((AndroidImage) image).bitmap, srcRect, dstRect, null);
+    }
+
+    @Override
+    public void drawScaledImageRel(Image image, double x, double y, double width, double height, int srcX, int srcY, int srcWidth, int srcHeight) {
+        drawScaledImage(image, (int)(getWidth() * x), (int)(getHeight() * y), (int)(getWidth() * width), (int)(getHeight() * height), srcX, srcY, srcWidth, srcHeight);
     }
 
     @Override
