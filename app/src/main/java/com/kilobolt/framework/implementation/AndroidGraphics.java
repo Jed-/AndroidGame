@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
@@ -29,6 +30,54 @@ public class AndroidGraphics implements Graphics {
         this.frameBuffer = frameBuffer;
         this.canvas      = new Canvas(frameBuffer);
         this.paint       = new Paint();
+    }
+
+    @Override
+    public Image newImage(String fileName, ImageFormat format, int x, int y) {
+        Config config = null;
+
+        if(format==ImageFormat.RGB565) {
+            config = Config.RGB_565;
+        } else if(format==ImageFormat.ARGB4444) {
+            config = Config.ARGB_4444;
+        } else {
+            config = Config.ARGB_8888;
+        }
+
+        Options options = new Options();
+        options.inPreferredConfig = config;
+
+        InputStream in = null;
+        Bitmap bitmap = null;
+        try {
+            in = assets.open(fileName);
+            bitmap = BitmapFactory.decodeStream(in, null, options);
+            if(bitmap==null) {
+                throw new RuntimeException("Couldn't load bitmap from asset '" + fileName + "'");
+            }
+        } catch(IOException e) {
+            throw new RuntimeException("Couldn't load bitmap from asset '" + fileName + "'");
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch(IOException e) {
+                    // pass
+                }
+            }
+        }
+
+        if(bitmap.getConfig() == Config.RGB_565) {
+            format = ImageFormat.RGB565;
+        } else if(bitmap.getConfig() == Config.ARGB_4444) {
+            format = ImageFormat.ARGB4444;
+        } else {
+            format = ImageFormat.ARGB8888;
+        }
+
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, x, y, true);
+
+        return new AndroidImage(scaledBitmap, format);
     }
 
     @Override

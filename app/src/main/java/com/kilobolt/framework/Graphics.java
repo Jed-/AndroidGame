@@ -7,6 +7,8 @@ public interface Graphics {
         ARGB8888, ARGB4444, RGB565
     }
 
+    Image newImage(String fileName, ImageFormat format, int x, int y);
+
     public Image newImage(String fileName, ImageFormat format);
 
     public void clearScreen(int color);
