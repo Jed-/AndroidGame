@@ -168,7 +168,7 @@ public class GameScreen extends Screen {
                     }
                 } else if(Util.inBoundsRel(event, 0.4375 /* 7 / 16 - center if width is 1 / 8 */, 0.875, 0.125, 0.125)) {
                     // menu button
-                    game.setScreen(new MainMenuScreen(game));
+                    game.setScreen(Screens.mainMenuScreen);
                 } else if(Util.inBoundsRel(event, 0.875, 0.875, 0.125, 0.125)) {
                     // quit button
                     android.os.Process.killProcess(android.os.Process.myPid());
@@ -185,7 +185,7 @@ public class GameScreen extends Screen {
                 if (event.x > 300 && event.x < 980 && event.y > 100
                         && event.y < 500) {
                     nullify();
-                    game.setScreen(new MainMenuScreen(game));
+                    game.setScreen(Screens.mainMenuScreen);
                     return;
                 }
             }

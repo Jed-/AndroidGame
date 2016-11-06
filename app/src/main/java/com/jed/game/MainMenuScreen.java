@@ -28,7 +28,7 @@ public class MainMenuScreen extends Screen {
                 if (event.type == TouchEvent.TOUCH_UP) {
                     if (Util.inBoundsRel(event, 0, 0, 0.25, 0.25)) {
                         // START GAME
-                        game.setScreen(new GameScreen(game));
+                        game.setScreen(Screens.gameScreen);
                     } else if(Util.inBoundsRel(event, 0.75, 0, 0.25, 0.25)) {
                         // QUIT
                         android.os.Process.killProcess(android.os.Process.myPid());

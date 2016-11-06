@@ -42,7 +42,10 @@ public class LoadingScreen extends Screen {
         Assets.none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565, 128, 120);
         Assets.player = game.getGraphics().newImage("sprites/player_left.png", ImageFormat.ARGB4444);
 
-        game.setScreen(new MainMenuScreen(game));
+        Screens.mainMenuScreen = new MainMenuScreen(game);
+        Screens.gameScreen     = new GameScreen(game);
+
+        game.setScreen(Screens.mainMenuScreen);
     }
 
     @Override
