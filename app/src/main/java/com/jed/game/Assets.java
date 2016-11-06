@@ -17,8 +17,8 @@ public class Assets {
     public static Sound click;
     public static Music music;
 
-    public static Image dirt;
-    public static Image none;
+    public static Image img_terr_dirt;
+    public static Image img_terr_none;
     public static Image player;
 
     public static List<Terrain> terrains = new ArrayList<Terrain>();

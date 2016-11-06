@@ -24,6 +24,18 @@ public class Map {
         return null;
     }
 
+    public int[] getSpawn() {
+        return spawn;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
     private int getTileIdx(int x, int y) {
         for(int i = 0; i < tiles.size(); i++) {
             int[] pos = tiles.get(i).getPos();

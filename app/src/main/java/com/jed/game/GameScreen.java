@@ -5,11 +5,15 @@ import java.util.List;
 import android.graphics.Color;
 import android.graphics.Paint;
 
+import com.jed.game.structure.Level;
+import com.jed.game.structure.Map;
+import com.jed.game.structure.Tile;
 import com.kilobolt.framework.Game;
 import com.kilobolt.framework.Graphics;
 import com.kilobolt.framework.Image;
 import com.kilobolt.framework.Screen;
 import com.kilobolt.framework.Input.TouchEvent;
+import com.kilobolt.framework.implementation.FrameBufferSize;
 
 
 public class GameScreen extends Screen {
@@ -34,6 +38,26 @@ public class GameScreen extends Screen {
 
     private long lastPaused = 0;
     private long lastResumed = 0;
+
+    // game rendering
+
+    private final int grid_cols = 15;
+    private final int grid_rows = 9;
+
+    private int cell_width = g.getWidth() / grid_cols;
+    private int cell_height = g.getHeight() / grid_rows;
+
+    // position where the player is shown on the screen
+    private int posx_shown = grid_cols / 2;
+    private int posy_shown = grid_rows / 2;
+
+    // player position
+    private int posx;
+    private int posy;
+
+    // level
+    private Level curLevel;
+    private Map   curMap;
 
     // to avoid resuming immediately after pausing, like, in the same frame
     private int stateChangeDelay = 20;
@@ -83,14 +107,12 @@ public class GameScreen extends Screen {
     }
 
     private void updateReady(List<TouchEvent> touchEvents) {
+        // load test level
+        curLevel = Assets.levels.get(0);
+        curMap = curLevel.getMap();
 
-        // This example starts with a "Ready" screen.
-        // When the user touches the screen, the game begins.
-        // state now becomes GameState.Running.
-        // Now the updateRunning() method will be called!
-
-//        if (touchEvents.size() > 0)
-//            state = GameState.Running;
+        posx = curMap.getSpawn()[0];
+        posy = curMap.getSpawn()[1];
 
         // start game
         if(state != GameState.Running) {
@@ -129,20 +151,28 @@ public class GameScreen extends Screen {
             } */
 
             if (event.type == TouchEvent.TOUCH_UP) {
+                // CONTROLS
 
-//                if(Util.inBoundsRel(event, 0, 0.875, 0.125, 0.125)) {
-//                    // pause button
-//                    if(System.currentTimeMillis() - lastResumed > stateChangeDelay) {
-//                        pause();
-//                    }
-//                }
-
-                // game controls released
-                /* else if (event.x <= g.getWidth() / 2) {
-                    // Stop moving left.
-                } else if (event.x > g.getWidth() / 2) {
-                    // Stop moving right. }
-                } */
+                // UP
+                if(Util.inBounds(event, 2 * cell_width, FrameBufferSize.height - 4 * cell_height, cell_width, cell_height)) {
+                    // move up
+                    try_move(posx, posy - 1);
+                } else
+                // DOWN
+                if(Util.inBounds(event, 2 * cell_width, FrameBufferSize.height - 2 * cell_height, cell_width, cell_height)) {
+                    // move down
+                    try_move(posx, posy + 1);
+                } else
+                // LEFT
+                if(Util.inBounds(event, 1 * cell_width, FrameBufferSize.height - 3 * cell_height, cell_width, cell_height)) {
+                    // move left
+                    try_move(posx - 1, posy);
+                } else
+                // RIGHT
+                if(Util.inBounds(event, 3 * cell_width, FrameBufferSize.height - 3 * cell_height, cell_width, cell_height)) {
+                    // move right
+                    try_move(posx + 1, posy);
+                }
             }
         }
         // 2. Check miscellaneous events like death:
@@ -193,15 +223,7 @@ public class GameScreen extends Screen {
 
     }
 
-    // test
-    private int posx = 4, posy = 4;
-    private final int grid_cols = 15;
-    private final int grid_rows = 9;
-    private int cell_width = g.getWidth() / grid_cols;
-    private int cell_height = g.getHeight() / grid_rows;
-
-    private int posx_shown = grid_cols / 2;
-    private int posy_shown = grid_rows / 2;
+    // show test level
 
     private void draw_cell(int x, int y, Image terrain) {
         g.drawImage(terrain, x * cell_width, y * cell_height, 0, 0, cell_width, cell_height);
@@ -220,6 +242,18 @@ public class GameScreen extends Screen {
         g.drawScaledImageRel(image, (double)(posx_shown + x - posx) / (double)grid_cols, (double)(posy_shown + y - posy) / (double)grid_rows, scale_factor / (double)grid_cols, scale_factor / (double)grid_rows, 0, 0, width, height);
     }
 
+    private void try_move(int x, int y) {
+        if(x < 0 || x >= curMap.getWidth() || y < 0 || y >= curMap.getHeight()) {
+            return;
+        }
+        Tile t = curMap.getTile(x, y);
+        if(t == null || !t.getTerrain().isReachable()) {
+            return;
+        }
+        posx = x;
+        posy = y;
+    }
+
     @Override
     public void paint(float deltaTime) {
         Graphics g = game.getGraphics();
@@ -230,10 +264,11 @@ public class GameScreen extends Screen {
         // draw map
         for(int x = 0; x < grid_cols; x++) {
             for(int y = 0; y < grid_rows; y++) {
-                if((x - posx_shown + posx) >= 0 && (x - posx_shown + posx) < 8 && (y - posy_shown + posy) >= 0 && (y - posy_shown + posy) < 8) {
-                    draw_cell(x, y, Assets.dirt);
+                Tile tile = curMap.getTile(x - posx_shown + posx, y - posy_shown + posy);
+                if(tile != null) {
+                    draw_cell(x, y, tile.getTerrain().getTexture());
                 } else {
-                    draw_cell(x, y, Assets.none);
+                    draw_cell(x, y, Assets.getTerrain("Vd").getTexture());
                 }
             }
         }
@@ -281,14 +316,28 @@ public class GameScreen extends Screen {
         Graphics g = game.getGraphics();
 
         Paint p = new Paint();
-        p.setTextSize(48);
+        p.setTextSize(72);
         p.setAntiAlias(true);
         p.setTextAlign(Paint.Align.CENTER);
-        p.setColor(Color.WHITE);
+        p.setColor(Color.BLUE);
 
-//        // make pause button
-//        g.drawRectRel(0, 0.875, 0.125, 0.125, AlphaColor.blue);
-//        g.drawStringRel("PAUSE", (0 + 0.125) / 2, (0.875 + 1) / 2, p);
+        // CONTROLS
+
+        // UP
+        g.drawRect(2 * cell_width, FrameBufferSize.height - 4 * cell_height, cell_width, cell_height, AlphaColor.white);
+        g.drawString("^", (int)(2.5 * cell_width), (int)(FrameBufferSize.height - 3.25 * cell_height), p);
+
+        // DOWN
+        g.drawRect(2 * cell_width, FrameBufferSize.height - 2 * cell_height, cell_width, cell_height, AlphaColor.white);
+        g.drawString("v", (int)(2.5 * cell_width), (int)(FrameBufferSize.height - 1.25 * cell_height), p);
+
+        // LEFT
+        g.drawRect(1 * cell_width, FrameBufferSize.height - 3 * cell_height, cell_width, cell_height, AlphaColor.white);
+        g.drawString("<", (int)(1.5 * cell_width), (int)(FrameBufferSize.height - 2.25 * cell_height), p);
+
+        // RIGHT
+        g.drawRect(3 * cell_width, FrameBufferSize.height - 3 * cell_height, cell_width, cell_height, AlphaColor.white);
+        g.drawString(">", (int)(3.5 * cell_width), (int)(FrameBufferSize.height - 2.25 * cell_height), p);
     }
 
     private void drawPausedUI() {

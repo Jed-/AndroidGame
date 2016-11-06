@@ -34,7 +34,7 @@ public class Util {
         return inBounds(event, (int)(width * x), (int)(height * y), (int)(width * _width), (int)(height * _height));
     }
 
-    public static List<Tile> parseTiles(int height, List<List<String>> terrains) {
+    public static List<Tile> parseTiles(List<List<String>> terrains) {
         List<Tile> tileList = new ArrayList<Tile>();
         int x = 0, y = 0;
         for(List<String> row : terrains) {
@@ -43,6 +43,7 @@ public class Util {
                 tileList.add(t);
                 x++;
             }
+            x = 0;
             y++;
         }
         return tileList;
