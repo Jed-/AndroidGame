@@ -48,9 +48,6 @@ public class LoadingScreen extends Screen {
         Assets.img_terr_none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565, 128, 120);
         Assets.player = game.getGraphics().newImage("sprites/player_left.png", ImageFormat.ARGB4444);
 
-        Screens.mainMenuScreen = new MainMenuScreen(game);
-        Screens.gameScreen     = new GameScreen(game);
-
         // load terrains
         Terrain voidTerrain = new Terrain("Vd", Assets.img_terr_none, false);
         Terrain dirtTerrain = new Terrain("Di", Assets.img_terr_dirt, true);
@@ -92,6 +89,10 @@ public class LoadingScreen extends Screen {
 
         Level level1 = new Level("Level 1", null, lvl1_map);
         Assets.levels.add(level1);
+
+        // load screens
+        Screens.mainMenuScreen = new MainMenuScreen(game);
+        Screens.gameScreen     = null;
 
         // show menu
         game.setScreen(Screens.mainMenuScreen);

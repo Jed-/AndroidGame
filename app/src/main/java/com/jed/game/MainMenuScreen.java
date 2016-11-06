@@ -9,7 +9,6 @@ import com.kilobolt.framework.Game;
 import com.kilobolt.framework.Graphics;
 import com.kilobolt.framework.Screen;
 import com.kilobolt.framework.Input.TouchEvent;
-import com.kilobolt.framework.implementation.AndroidGraphics;
 
 public class MainMenuScreen extends Screen {
     public MainMenuScreen(Game game) {
@@ -28,14 +27,16 @@ public class MainMenuScreen extends Screen {
                 if (event.type == TouchEvent.TOUCH_UP) {
                     if (Util.inBoundsRel(event, 0, 0, 0.25, 0.25)) {
                         // START GAME
+                        if(Screens.gameScreen == null) {
+                            Screens.gameScreen = new GameScreen(game);
+                        }
                         game.setScreen(Screens.gameScreen);
                     } else if(Util.inBoundsRel(event, 0.75, 0, 0.25, 0.25)) {
                         // QUIT
                         android.os.Process.killProcess(android.os.Process.myPid());
                     }
                 }
-            } catch(Exception e) {
-                    // zoom: pass
+            } catch(Exception ignored) {
             }
         }
     }
