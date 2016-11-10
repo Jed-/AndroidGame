@@ -4,6 +4,7 @@ import java.util.List;
 
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.provider.Settings;
 
 import com.jed.game.structure.Level;
 import com.jed.game.structure.Map;
@@ -21,14 +22,34 @@ public class GameScreen extends Screen {
         Ready, Running, Paused, GameOver
     }
 
+    private enum PlayerState {
+        Still, Moving
+    }
+
+    final int DIR_RIGHT  = 0;
+    final int DIR_DOWN  = 1;
+    final int DIR_LEFT = 2;
+    final int DIR_UP    = 3;
+
+    boolean kill_anim = false;
+
+    int lastDir = DIR_LEFT;
+    int nextDir = -1;
+    long lastMove = 0;
+    int move_period = 200;
+
+    int[] anim_offset = new int[2];
+
+    int player_offset[] = {24, 0};
+
     private GameState state = GameState.Ready;
+    private PlayerState playerState = PlayerState.Still;
 
     // Variable Setup
     // You would create game objects here.
 
     private Graphics g = game.getGraphics();
 
-    private int livesLeft = 1;
     private Paint paint;
 
     private float fps           = 0;
@@ -120,15 +141,6 @@ public class GameScreen extends Screen {
         }
     }
 
-    /* private boolean inBounds(TouchEvent event, int x, int y, int width,
-                             int height) {
-        if (event.x > x && event.x < x + width - 1 && event.y > y
-                && event.y < y + height - 1)
-            return true;
-        else
-            return false;
-    } */
-
     private void updateRunning(List<TouchEvent> touchEvents, float deltaTime) {
         //This is identical to the update() method from our Unit 2/3 game.
 
@@ -137,48 +149,177 @@ public class GameScreen extends Screen {
         for (int i = 0; i < len; i++) {
             TouchEvent event = touchEvents.get(i);
 
-            // game controls
-/*            if (event.type == TouchEvent.TOUCH_DOWN) {
-
-                if (event.x <= g.getWidth() / 2) {
-                    // Move left.
-                }
-
-                else if (event.x > g.getWidth() / 2) {
-                    // Move right.
-                }
-
-            } */
-
             if (event.type == TouchEvent.TOUCH_UP) {
-                // CONTROLS
-
+                // stop moving
+                kill_anim = true;
+            } else {
                 // UP
                 if(Util.inBounds(event, 2 * cell_width, FrameBufferSize.height - 4 * cell_height, cell_width, cell_height)) {
                     // move up
-                    try_move(posx, posy - 1);
+                    if(playerState != PlayerState.Moving || lastDir != DIR_UP) {
+                        if(nextDir < 0) {
+                            lastDir = DIR_UP;
+                            lastMove = System.currentTimeMillis();
+                        }
+                        nextDir = DIR_UP;
+                        if(can_move(posx, posy - 1)) {
+                            playerState = PlayerState.Moving;
+                        }
+                    }
                 } else
                 // DOWN
                 if(Util.inBounds(event, 2 * cell_width, FrameBufferSize.height - 2 * cell_height, cell_width, cell_height)) {
                     // move down
-                    try_move(posx, posy + 1);
+                    if(playerState != PlayerState.Moving || lastDir != DIR_DOWN) {
+                        if(nextDir < 0) {
+                            lastDir = DIR_DOWN;
+                            lastMove = System.currentTimeMillis();
+                        }
+                        nextDir = DIR_DOWN;
+                        if(can_move(posx, posy + 1)) {
+                            playerState = PlayerState.Moving;
+                        }
+                    }
                 } else
                 // LEFT
                 if(Util.inBounds(event, 1 * cell_width, FrameBufferSize.height - 3 * cell_height, cell_width, cell_height)) {
                     // move left
-                    try_move(posx - 1, posy);
+                    if(playerState != PlayerState.Moving || lastDir != DIR_LEFT) {
+                        if(nextDir < 0) {
+                            lastDir = DIR_LEFT;
+                            lastMove = System.currentTimeMillis();
+                        }
+                        nextDir = DIR_LEFT;
+                        if(can_move(posx - 1, posy)) {
+                            playerState = PlayerState.Moving;
+                        }
+                    }
                 } else
                 // RIGHT
                 if(Util.inBounds(event, 3 * cell_width, FrameBufferSize.height - 3 * cell_height, cell_width, cell_height)) {
                     // move right
-                    try_move(posx + 1, posy);
+                    if(playerState != PlayerState.Moving || lastDir != DIR_RIGHT) {
+                        if(nextDir < 0) {
+                            lastDir = DIR_RIGHT;
+                            lastMove = System.currentTimeMillis();
+                        }
+                        nextDir = DIR_RIGHT;
+                        if(can_move(posx + 1, posy)) {
+                            playerState = PlayerState.Moving;
+                        }
+                    }
                 }
             }
         }
         // 2. Check miscellaneous events like death:
 
-        if (livesLeft == 0) {
-            state = GameState.GameOver;
+//        if (livesLeft == 0) {
+//            state = GameState.GameOver;
+//        }
+
+        if(kill_anim && playerState == PlayerState.Moving && System.currentTimeMillis() - lastMove >= move_period) {
+            kill_anim = false;
+            nextDir = -1;
+            playerState = PlayerState.Still;
+            anim_offset = new int[]{0, 0};
+            switch(lastDir) {
+                case DIR_UP:
+                    try_move(posx, posy - 1);
+                    break;
+                case DIR_DOWN:
+                    try_move(posx, posy + 1);
+                    break;
+                case DIR_LEFT:
+                    try_move(posx - 1, posy);
+                    break;
+                case DIR_RIGHT:
+                    try_move(posx + 1, posy);
+                    break;
+                default:
+                    break;
+            }
+        }
+        // check moves
+        if(playerState == PlayerState.Moving) {
+            boolean canMove = true;
+            switch(lastDir) {
+                case DIR_UP:
+                    if(!can_move(posx, posy - 1)) {
+                        kill_anim = true;
+                        canMove = false;
+                    }
+                    break;
+                case DIR_DOWN:
+                    if(!can_move(posx, posy + 1)) {
+                        kill_anim = true;
+                        canMove = false;
+                    }
+                    break;
+                case DIR_LEFT:
+                    if(!can_move(posx - 1, posy)) {
+                        kill_anim = true;
+                        canMove = false;
+                    }
+                    break;
+                case DIR_RIGHT:
+                    if(!can_move(posx + 1, posy)) {
+                        kill_anim = true;
+                        canMove = false;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            if(System.currentTimeMillis() - lastMove >= move_period) {
+                anim_offset = new int[]{0, 0};
+                switch(lastDir) {
+                    case DIR_UP:
+                        try_move(posx, posy - 1);
+                        lastMove = System.currentTimeMillis();
+                        break;
+                    case DIR_DOWN:
+                        try_move(posx, posy + 1);
+                        lastMove = System.currentTimeMillis();
+                        break;
+                    case DIR_LEFT:
+                        try_move(posx - 1, posy);
+                        lastMove = System.currentTimeMillis();
+                        break;
+                    case DIR_RIGHT:
+                        try_move(posx + 1, posy);
+                        lastMove = System.currentTimeMillis();
+                        break;
+                    default:
+                        break;
+                }
+                if(nextDir > -1) {
+                    lastDir = nextDir;
+                }
+            } else {
+                double offset = (double)(System.currentTimeMillis() - lastMove) / (double)move_period;
+                if(canMove) {
+                    switch (lastDir) {
+                        case DIR_UP:
+                            anim_offset[0] = 0;
+                            anim_offset[1] = (int) (offset * cell_height);
+                            break;
+                        case DIR_DOWN:
+                            anim_offset[0] = 0;
+                            anim_offset[1] = -(int) (offset * cell_height);
+                            break;
+                        case DIR_LEFT:
+                            anim_offset[0] = (int) (offset * cell_width);
+                            anim_offset[1] = 0;
+                            break;
+                        case DIR_RIGHT:
+                            anim_offset[0] = -(int) (offset * cell_width);
+                            anim_offset[1] = 0;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
         }
 
         // 3. Call individual update() methods here.
@@ -229,17 +370,24 @@ public class GameScreen extends Screen {
         g.drawImage(terrain, x * cell_width, y * cell_height, 0, 0, cell_width, cell_height);
     }
 
-    private void draw_item(int x, int y, int width, int height, Image image) {
+    private void draw_cell(int x, int y, Image terrain, int off_x, int off_y) {
+        g.drawImage(terrain, x * cell_width + off_x, y * cell_height + off_y, 0, 0, cell_width, cell_height);
+    }
+
+    private void draw_item(int x, int y, int width, int height, Image image, int off_x, int off_y) {
         if(Math.abs(x - posx) > grid_cols / 2 || Math.abs(y - posy) > grid_rows / 2) {
             return;
         }
-        double scale_factor = 1; // don't keep different factors for X and Y axes to keep proportions
-        if(width > height) {
-            scale_factor = (double)height / (double)width;
-        } else if(width < height) {
-            scale_factor = (double)width / (double)height;
-        }
-        g.drawScaledImageRel(image, (double)(posx_shown + x - posx) / (double)grid_cols, (double)(posy_shown + y - posy) / (double)grid_rows, scale_factor / (double)grid_cols, scale_factor / (double)grid_rows, 0, 0, width, height);
+//        double scale_factor = 1; // don't keep different factors for X and Y axes to keep proportions
+//        if(width > height) {
+//            scale_factor = (double)height / (double)width;
+//        } else if(width < height) {
+//            scale_factor = (double)width / (double)height;
+//        }
+        g.drawScaledImageRel(image, (double)(posx_shown + x - posx) / (double)grid_cols + (double) off_x / FrameBufferSize.width, (double)(posy_shown + y - posy) / (double)grid_rows + (double) off_y / FrameBufferSize.height, 1 / (double)grid_cols, 1 / (double)grid_rows, 0, 0, width, height);
+    }
+    private void draw_item(int x, int y, int width, int height, Image image) {
+        draw_item(x, y, width, height, image, 0, 0);
     }
 
     private void try_move(int x, int y) {
@@ -254,6 +402,17 @@ public class GameScreen extends Screen {
         posy = y;
     }
 
+    private boolean can_move(int x, int y) {
+        if(x < 0 || x >= curMap.getWidth() || y < 0 || y >= curMap.getHeight()) {
+            return false;
+        }
+        Tile t = curMap.getTile(x, y);
+        if(t == null || !t.getTerrain().isReachable()) {
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void paint(float deltaTime) {
         Graphics g = game.getGraphics();
@@ -262,18 +421,36 @@ public class GameScreen extends Screen {
 
         // test
         // draw map
-        for(int x = 0; x < grid_cols; x++) {
-            for(int y = 0; y < grid_rows; y++) {
+        int _x     = 0;
+        int _y     = 0;
+        int x_add = 0;
+        int y_add = 0;
+        if(playerState == PlayerState.Moving) {
+            if(lastDir == DIR_LEFT) {
+                _x = -1;
+            }
+            if(lastDir == DIR_UP) {
+                _y = -1;
+            }
+            if(lastDir == DIR_RIGHT) {
+                x_add = 1;
+            }
+            if(lastDir == DIR_DOWN) {
+                y_add = 1;
+            }
+        }
+        for(int x = _x; x < grid_cols + x_add; x++) {
+            for(int y = _y; y < grid_rows + y_add; y++) {
                 Tile tile = curMap.getTile(x - posx_shown + posx, y - posy_shown + posy);
                 if(tile != null) {
-                    draw_cell(x, y, tile.getTerrain().getTexture());
+                    draw_cell(x, y, tile.getTerrain().getTexture(), anim_offset[0], anim_offset[1]);
                 } else {
-                    draw_cell(x, y, Assets.getTerrain("Vd").getTexture());
+                    draw_cell(x, y, Assets.getTerrain("Vd").getTexture(), anim_offset[0], anim_offset[1]);
                 }
             }
         }
         // draw player
-        draw_item(posx, posy, 152, 115, Assets.player);
+        draw_item(posx, posy, 152, 115, Assets.player[lastDir], player_offset[0], player_offset[1]);
 
         // Example:
         // g.drawImage(Assets.background, 0, 0);

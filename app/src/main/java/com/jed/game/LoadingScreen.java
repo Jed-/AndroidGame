@@ -46,7 +46,13 @@ public class LoadingScreen extends Screen {
         // load textures
         Assets.img_terr_dirt = game.getGraphics().newImage("textures/terrain_dirt.png", Graphics.ImageFormat.RGB565, 128, 120);
         Assets.img_terr_none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565, 128, 120);
-        Assets.player = game.getGraphics().newImage("sprites/player_left.png", ImageFormat.ARGB4444);
+
+        // load player
+        int player_width  = 136;
+        int player_height = 216;
+        for(int i = 0; i < 4; i++) {
+            Assets.player[i] = game.getGraphics().newImageCropped("sprites/player.png", ImageFormat.ARGB4444, i * player_width, 0, player_width, player_height, 81, 120);
+        }
 
         // load terrains
         Terrain voidTerrain = new Terrain("Vd", Assets.img_terr_none, false);
@@ -57,13 +63,13 @@ public class LoadingScreen extends Screen {
         // make test level
         String[] lvl1_layout = {
                 "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
-                "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
+                "Di", "Di", "Di", "Vd", "Vd", "Di", "Di", "Di",
                 "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
                 "Di", "Vd", "Di", "Di", "Di", "Di", "Vd", "Di",
                 "Di", "Vd", "Di", "Di", "Di", "Di", "Vd", "Di",
                 "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
+                "Di", "Di", "Di", "Vd", "Vd", "Di", "Di", "Di",
                 "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
-                "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di"
         };
         int mapWidth  = 8;
         int mapHeight = 8;
@@ -71,7 +77,7 @@ public class LoadingScreen extends Screen {
         List<String> buffer = new ArrayList<>();
         int x = 0, y = 0;
         for(String str : lvl1_layout) {
-            if(y >= mapHeight) {
+            if(y > mapHeight) {
                 lvl1_strListList.add(buffer);
                 break;
             }
@@ -83,6 +89,9 @@ public class LoadingScreen extends Screen {
             }
             buffer.add(str);
             x++;
+        }
+        if(buffer.size() > 0) {
+            lvl1_strListList.add(buffer);
         }
         List<Tile> lvl1_tiles = Util.parseTiles(lvl1_strListList);
         Map lvl1_map = new Map(mapWidth, mapHeight, new int[]{1, 1}, lvl1_tiles);

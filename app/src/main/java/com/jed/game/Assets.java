@@ -19,7 +19,7 @@ public class Assets {
 
     public static Image img_terr_dirt;
     public static Image img_terr_none;
-    public static Image player;
+    public static Image[] player = new Image[4];
 
     public static List<Terrain> terrains = new ArrayList<Terrain>();
     public static List<Level>   levels   = new ArrayList<Level>();
