@@ -2,7 +2,7 @@ package com.jed.game.structure;
 
 public class Level {
     private String name;
-    private String  next;
+    private String next;
     private Map    map;
 
     public String getName() {
