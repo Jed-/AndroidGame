@@ -24,19 +24,9 @@ public class Tile {
         this.terrain = terrain;
     }
 
-    public void setTerrain(String terrainName) {
-        this.terrain = Assets.getTerrain(terrainName);
-    }
-
     public Tile(int x, int y, Terrain terrain) {
         this.x = x;
         this.y = y;
         this.terrain = terrain;
-    }
-
-    public Tile(int x, int y, String terrainName) {
-        this.x = x;
-        this.y = y;
-        this.terrain = Assets.getTerrain(terrainName);
     }
 }

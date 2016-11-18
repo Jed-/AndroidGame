@@ -14,21 +14,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Assets {
-
-    public static Image menu;
-    public static Sound click;
     public static Music music;
 
-    public static Image img_terr_dirt;
-    public static Image img_terr_none;
     public static Image[] player = new Image[4];
 
-    public static List<Terrain> terrains = new ArrayList<Terrain>();
+    public static Terrain default_terrain;
+
+//    public static List<Terrain> terrains = new ArrayList<Terrain>();
     public static List<Level>   levels   = new ArrayList<Level>();
 
     public static List<Setting> settings = new ArrayList<Setting>();
 
-    @Nullable
+/*    @Nullable
     public static Terrain getTerrain(String name) {
         for(Terrain t : terrains) {
             if(t.getName().equals(name)) {
@@ -36,7 +33,7 @@ public class Assets {
             }
         }
         return null;
-    }
+    } */
 
     public static Setting getSetting(String name) {
         for(Setting s : settings) {

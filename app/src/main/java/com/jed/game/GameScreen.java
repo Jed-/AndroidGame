@@ -128,7 +128,7 @@ public class GameScreen extends Screen {
     }
 
     private void updateReady(List<TouchEvent> touchEvents) {
-        // load test level
+        // load first level
         curLevel = Assets.levels.get(0);
         curMap = curLevel.getMap();
 
@@ -417,14 +417,12 @@ public class GameScreen extends Screen {
     public void paint(float deltaTime) {
         Graphics g = game.getGraphics();
 
-        // First draw the game elements.
-
-        // test
-        // draw map
         int _x     = 0;
         int _y     = 0;
         int x_add = 0;
         int y_add = 0;
+
+        // add offset if we are running an animation
         if(playerState == PlayerState.Moving) {
             if(lastDir == DIR_LEFT) {
                 _x = -1;
@@ -439,16 +437,19 @@ public class GameScreen extends Screen {
                 y_add = 1;
             }
         }
+
+        // draw map
         for(int x = _x; x < grid_cols + x_add; x++) {
             for(int y = _y; y < grid_rows + y_add; y++) {
                 Tile tile = curMap.getTile(x - posx_shown + posx, y - posy_shown + posy);
                 if(tile != null) {
                     draw_cell(x, y, tile.getTerrain().getTexture(), anim_offset[0], anim_offset[1]);
                 } else {
-                    draw_cell(x, y, Assets.getTerrain("Vd").getTexture(), anim_offset[0], anim_offset[1]);
+                    draw_cell(x, y, Assets.default_terrain.getTexture(), anim_offset[0], anim_offset[1]);
                 }
             }
         }
+
         // draw player
         draw_item(posx, posy, 152, 115, Assets.player[lastDir], player_offset[0], player_offset[1]);
 

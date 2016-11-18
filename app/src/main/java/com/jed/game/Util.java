@@ -1,5 +1,7 @@
 package com.jed.game;
 
+import android.support.annotation.Nullable;
+
 import com.jed.game.structure.Level;
 import com.jed.game.structure.Map;
 import com.jed.game.structure.Terrain;
@@ -34,12 +36,22 @@ public class Util {
         return inBounds(event, (int)(width * x), (int)(height * y), (int)(width * _width), (int)(height * _height));
     }
 
-    public static List<Tile> parseTiles(List<List<String>> terrains) {
+    @Nullable
+    private static Terrain getTerrain(String name, List<Terrain> terrains) {
+        for(Terrain t : terrains) {
+            if(t.getName().equals(name)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    public static List<Tile> parseTiles(List<List<String>> terrainStrings, List<Terrain> terrains) {
         List<Tile> tileList = new ArrayList<Tile>();
         int x = 0, y = 0;
-        for(List<String> row : terrains) {
+        for(List<String> row : terrainStrings) {
             for(String name : row) {
-                Tile t = new Tile(x, y, name);
+                Tile t = new Tile(x, y, getTerrain(name, terrains));
                 tileList.add(t);
                 x++;
             }

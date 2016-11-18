@@ -1,5 +1,11 @@
 package com.jed.game.structure;
 
+import android.support.annotation.Nullable;
+
+import com.kilobolt.framework.Image;
+
+import java.util.List;
+
 public class Level {
     private String name;
     private String next;

@@ -11,6 +11,7 @@ import com.jed.game.structure.Tile;
 import com.kilobolt.framework.FileIO;
 import com.kilobolt.framework.Game;
 import com.kilobolt.framework.Graphics;
+import com.kilobolt.framework.Image;
 import com.kilobolt.framework.Screen;
 import com.kilobolt.framework.Graphics.ImageFormat;
 
@@ -20,7 +21,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 public class LoadingScreen extends Screen {
     public LoadingScreen(Game game) {
@@ -35,12 +35,6 @@ public class LoadingScreen extends Screen {
         if(error) {
             return;
         }
-        Graphics g = game.getGraphics();
-//        Assets.menu = g.newImage("menu.png", ImageFormat.RGB565);
-//        Assets.click = game.getAudio().createSound("explode.ogg");
-//        g.drawImage(Assets.menu, 250, 500);
-
-        // LOAD SHIT HERE
 
         // load settings
         try {
@@ -51,14 +45,20 @@ public class LoadingScreen extends Screen {
 
         String firstLevel = null;
         String musicFile = null;
+        String defaultTerrainImageName = null;
         int    musicVol  = 0;
         try {
             firstLevel = getStringSetting("firstLevel");
             musicFile  = getStringSetting("music");
             musicVol   = getIntSetting("musicVol");
+
+            defaultTerrainImageName = getStringSetting("defaultTerrain");
         } catch(IOException e) {
             return;
         }
+
+        // load default terrain
+        Assets.default_terrain = new Terrain(null, game.getGraphics().newImage("textures/terrains/" + defaultTerrainImageName, ImageFormat.RGB565, 128, 120), false);
 
         // load music
         Assets.music = game.getAudio().createMusic(musicFile);
@@ -66,8 +66,8 @@ public class LoadingScreen extends Screen {
         Assets.music.setVolume((float)musicVol / 100.f);
 
         // load textures
-        Assets.img_terr_dirt = game.getGraphics().newImage("textures/terrain_dirt.png", Graphics.ImageFormat.RGB565, 128, 120);
-        Assets.img_terr_none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565, 128, 120);
+//        Assets.img_terr_dirt = game.getGraphics().newImage("textures/terrain_dirt.png", Graphics.ImageFormat.RGB565, 128, 120);
+//        Assets.img_terr_none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565, 128, 120);
 
         // load player
         int player_width  = 136;
@@ -77,57 +77,18 @@ public class LoadingScreen extends Screen {
         }
 
         // load terrains
-        Terrain voidTerrain = new Terrain("Vd", Assets.img_terr_none, false);
-        Terrain dirtTerrain = new Terrain("Di", Assets.img_terr_dirt, true);
-        Assets.terrains.add(voidTerrain);
-        Assets.terrains.add(dirtTerrain);
+//        Terrain voidTerrain = new Terrain("Vd", Assets.img_terr_none, false);
+//        Terrain dirtTerrain = new Terrain("Di", Assets.img_terr_dirt, true);
+//        Assets.terrains.add(voidTerrain);
+//        Assets.terrains.add(dirtTerrain);
 
+        // parse first level
         try {
             Level level = parseLevel(firstLevel);
             Assets.levels.add(level);
         } catch(IOException e) {
             return;
         }
-
-/*        // make test level
-        String[] lvl1_layout = {
-                "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
-                "Di", "Di", "Di", "Vd", "Vd", "Di", "Di", "Di",
-                "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
-                "Di", "Vd", "Di", "Di", "Di", "Di", "Vd", "Di",
-                "Di", "Vd", "Di", "Di", "Di", "Di", "Vd", "Di",
-                "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
-                "Di", "Di", "Di", "Vd", "Vd", "Di", "Di", "Di",
-                "Di", "Di", "Di", "Di", "Di", "Di", "Di", "Di",
-        };
-        int mapWidth  = 8;
-        int mapHeight = 8;
-        List<List<String>> lvl1_strListList = new ArrayList<>();
-        List<String> buffer = new ArrayList<>();
-        int x = 0, y = 0;
-        for(String str : lvl1_layout) {
-            if(y > mapHeight) {
-                lvl1_strListList.add(buffer);
-                break;
-            }
-            if(x >= mapWidth) {
-                lvl1_strListList.add(buffer);
-                x = 0;
-                y++;
-                buffer = new ArrayList<>();
-            }
-            buffer.add(str);
-            x++;
-        }
-        if(buffer.size() > 0) {
-            lvl1_strListList.add(buffer);
-        }
-        List<Tile> lvl1_tiles = Util.parseTiles(lvl1_strListList);
-        Map lvl1_map = new Map(mapWidth, mapHeight, new int[]{1, 1}, lvl1_tiles);
-
-        Level level1 = new Level("Level 1", null, lvl1_map);
-        Assets.levels.add(level1); */
-
 
         // load screens
         Screens.mainMenuScreen = new MainMenuScreen(game);
@@ -226,12 +187,13 @@ public class LoadingScreen extends Screen {
             }
         }
         int[] spawn = {spawnx, spawny};
-        Map map = parseMap(level, width, height, spawn);
+        List<Terrain> terrains = parseTerrains(name);
+        Map map = parseMap(level, terrains, width, height, spawn);
         Level l = new Level(name, next, map);
         return l;
     }
 
-    public Map parseMap(String level, int width, int height, int[] spawn) throws IOException {
+    public Map parseMap(String level, List<Terrain> terrains, int width, int height, int[] spawn) throws IOException {
         List<String> lines = null;
         try {
             lines = readLines("levels/" + level + ".map");
@@ -245,7 +207,7 @@ public class LoadingScreen extends Screen {
         List<String> buffer = new ArrayList<>();
         for(int i = 0; i < lines.size(); i++) {
             String[] splitLine = lines.get(i).split("[\\t ]");
-            if(splitLine.length > 0) {
+            if(splitLine.length >= 2) {
                 for(int j = 0; j < splitLine.length; j++) {
                     buffer.add(splitLine[j]);
                 }
@@ -254,9 +216,44 @@ public class LoadingScreen extends Screen {
                 y++;
             }
         }
-        List<Tile> tileList = Util.parseTiles(stringListList);
+        List<Tile> tileList = Util.parseTiles(stringListList, terrains);
         Map map = new Map(width, height, spawn, tileList);
         return map;
+    }
+
+    public List<Terrain> parseTerrains(String levelName) throws IOException {
+        List<String> lines = null;
+        try {
+            lines = readLines("levels/" + levelName + ".ter");
+        } catch(IOException e) {
+            error = true;
+            errorText = "ERROR: could not load file: levels/" + levelName + ".ter";
+            throw(e);
+        }
+        List<Terrain> terrainList = new ArrayList<>();
+        for(int i = 0; i < lines.size(); i++) {
+            String[] splitLine = lines.get(i).split("[\\t ]", 3);
+            if (splitLine.length >= 2) {
+                Image image = game.getGraphics().newImage("textures/terrains/" + splitLine[1], ImageFormat.RGB565, 128, 120);
+                Terrain t = null;
+                if (splitLine.length == 2) {
+                    t = new Terrain(splitLine[0], image, true);
+                } else {
+                    try {
+                        int reachable = Integer.parseInt(splitLine[2]);
+                        t = new Terrain(splitLine[0], image, reachable != 0);
+                    } catch (NumberFormatException e) {
+                        error = true;
+                        errorText = "ERROR: in file 'levels/" + levelName + ".ter', line " + (i + 1) + ": '" + splitLine + "' is not a valid number!";
+                        throw new IOException();
+                    }
+                }
+                if(t != null) {
+                    terrainList.add(t);
+                }
+            }
+        }
+        return terrainList;
     }
 
     @Override
@@ -266,16 +263,19 @@ public class LoadingScreen extends Screen {
         g.drawARGB(255, 50, 100, 200);
 
         Paint p = new Paint();
+        p.setAntiAlias(true);
         p.setColor(Color.rgb(150, 200, 255));
         p.setTextAlign(Paint.Align.CENTER);
         p.setTextSize(144);
 
         Paint p2 = new Paint();
+        p2.setAntiAlias(true);
         p2.setColor(Color.rgb(150, 200, 255));
         p2.setTextAlign(Paint.Align.CENTER);
         p2.setTextSize(112);
 
         Paint p3 = new Paint();
+        p3.setAntiAlias(true);
         p3.setColor(Color.WHITE);
         p3.setTextAlign(Paint.Align.LEFT);
         p3.setTextSize(36);
