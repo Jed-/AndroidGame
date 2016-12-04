@@ -18,6 +18,8 @@ import com.kilobolt.framework.Graphics;
 import com.kilobolt.framework.Input;
 import com.kilobolt.framework.Screen;
 
+import java.util.concurrent.locks.LockSupport;
+
 public abstract class AndroidGame extends Activity implements Game {
     AndroidFastRenderView renderView;
     Graphics              graphics;
@@ -56,14 +58,14 @@ public abstract class AndroidGame extends Activity implements Game {
         setContentView(renderView);
 
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "MyGame"); // "MyGame" ???
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyGame"); // "MyGame" ???
     }
 
     @Override
     public void onResume() {
         super.onResume();
         wakeLock.acquire();
-        screen.resume();
+//        screen.resume();
         renderView.resume();
     }
 
@@ -107,7 +109,9 @@ public abstract class AndroidGame extends Activity implements Game {
 
         this.screen.pause();
         this.screen.dispose();
-        screen.resume();
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        boolean isScreenOn = powerManager.isScreenOn();
+//        screen.resume();
         screen.update(0);
         this.screen = screen;
     }

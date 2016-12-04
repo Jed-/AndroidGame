@@ -37,65 +37,72 @@ public class LoadingScreen extends Screen {
         }
 
         // load settings
-        try {
-            parseSettings("settings.cfg");
-        } catch(IOException e) {
-            return;
-        }
+        if(game.getState() == 0) {
+            try {
+                parseSettings("settings.cfg");
+            } catch (IOException e) {
+                return;
+            }
+            String firstLevel = null;
+            String musicFile = null;
+            String defaultTerrainImageName = null;
+            int musicVol = 0;
+            try {
+                firstLevel = getStringSetting("firstLevel");
+                musicFile = getStringSetting("music");
+                musicVol = getIntSetting("musicVol");
 
-        String firstLevel = null;
-        String musicFile = null;
-        String defaultTerrainImageName = null;
-        int    musicVol  = 0;
-        try {
-            firstLevel = getStringSetting("firstLevel");
-            musicFile  = getStringSetting("music");
-            musicVol   = getIntSetting("musicVol");
+                defaultTerrainImageName = getStringSetting("defaultTerrain");
+            } catch (IOException e) {
+                return;
+            }
 
-            defaultTerrainImageName = getStringSetting("defaultTerrain");
-        } catch(IOException e) {
-            return;
-        }
+            // load default terrain
+            Assets.default_terrain = new Terrain(null, game.getGraphics().newImage("textures/terrains/" + defaultTerrainImageName, ImageFormat.RGB565, 128, 120), false);
 
-        // load default terrain
-        Assets.default_terrain = new Terrain(null, game.getGraphics().newImage("textures/terrains/" + defaultTerrainImageName, ImageFormat.RGB565, 128, 120), false);
+            // load music
+            Assets.music = game.getAudio().createMusic(musicFile);
+            Assets.music.setLooping(true);
+            Assets.music.setVolume((float) musicVol / 100.f);
 
-        // load music
-        Assets.music = game.getAudio().createMusic(musicFile);
-        Assets.music.setLooping(true);
-        Assets.music.setVolume((float)musicVol / 100.f);
+            // load textures
+            //        Assets.img_terr_dirt = game.getGraphics().newImage("textures/terrain_dirt.png", Graphics.ImageFormat.RGB565, 128, 120);
+            //        Assets.img_terr_none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565, 128, 120);
 
-        // load textures
-//        Assets.img_terr_dirt = game.getGraphics().newImage("textures/terrain_dirt.png", Graphics.ImageFormat.RGB565, 128, 120);
-//        Assets.img_terr_none = game.getGraphics().newImage("textures/terrain_none.png", Graphics.ImageFormat.RGB565, 128, 120);
+            // load player
+            int player_width = 136;
+            int player_height = 216;
+            for (int i = 0; i < 4; i++) {
+                Assets.player[i] = game.getGraphics().newImageCropped("sprites/player.png", ImageFormat.ARGB4444, i * player_width, 0, player_width, player_height, 81, 120);
+            }
 
-        // load player
-        int player_width  = 136;
-        int player_height = 216;
-        for(int i = 0; i < 4; i++) {
-            Assets.player[i] = game.getGraphics().newImageCropped("sprites/player.png", ImageFormat.ARGB4444, i * player_width, 0, player_width, player_height, 81, 120);
-        }
+            // load terrains
+            //        Terrain voidTerrain = new Terrain("Vd", Assets.img_terr_none, false);
+            //        Terrain dirtTerrain = new Terrain("Di", Assets.img_terr_dirt, true);
+            //        Assets.terrains.add(voidTerrain);
+            //        Assets.terrains.add(dirtTerrain);
 
-        // load terrains
-//        Terrain voidTerrain = new Terrain("Vd", Assets.img_terr_none, false);
-//        Terrain dirtTerrain = new Terrain("Di", Assets.img_terr_dirt, true);
-//        Assets.terrains.add(voidTerrain);
-//        Assets.terrains.add(dirtTerrain);
-
-        // parse first level
-        try {
-            Level level = parseLevel(firstLevel);
-            Assets.levels.add(level);
-        } catch(IOException e) {
-            return;
+            // parse first level
+            try {
+                Level level = parseLevel(firstLevel);
+                Assets.levels.add(level);
+            } catch (IOException e) {
+                return;
+            }
         }
 
         // load screens
         Screens.mainMenuScreen = new MainMenuScreen(game);
-        Screens.gameScreen     = null;
+        Screens.gameScreen = null;
 
-        // show menu
-        game.setScreen(Screens.mainMenuScreen);
+        if(game.getState() == 2) {
+            Screens.gameScreen = new GameScreen(game);
+            game.setScreen(Screens.gameScreen);
+        } else {
+            // show menu
+            game.setState(1);
+            game.setScreen(Screens.mainMenuScreen);
+        }
     }
 
     public List<String> readLines(String filename) throws IOException {

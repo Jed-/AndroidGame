@@ -30,6 +30,7 @@ public class MainMenuScreen extends Screen {
                         if(Screens.gameScreen == null) {
                             Screens.gameScreen = new GameScreen(game);
                         }
+                        game.setState(2);
                         game.setScreen(Screens.gameScreen);
                     } else if(Util.inBoundsRel(event, 0.75, 0, 0.25, 0.25)) {
                         // QUIT

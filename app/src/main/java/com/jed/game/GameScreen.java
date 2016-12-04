@@ -83,6 +83,8 @@ public class GameScreen extends Screen {
     // to avoid resuming immediately after pausing, like, in the same frame
     private int stateChangeDelay = 20;
 
+    private boolean canResume = false;
+
     public GameScreen(Game game) {
         super(game);
 
@@ -92,7 +94,7 @@ public class GameScreen extends Screen {
         paint.setAntiAlias(true);
         paint.setTextSize(24);
 
-        Assets.music.play();
+//       Assets.music.play();
 
     }
 
@@ -135,9 +137,21 @@ public class GameScreen extends Screen {
         posx = curMap.getSpawn()[0];
         posy = curMap.getSpawn()[1];
 
+        if(game.getPosx() >= 0 && game.getPosy() >= 0) {
+            posx = game.getPosx();
+            posy = game.getPosy();
+        }
+
         // start game
-        if(state != GameState.Running) {
-            state = GameState.Running;
+        if(state != GameState.Running && !game.Resumed()) {
+            canResume = true;
+            resume();
+        }
+
+        if(game.Resumed()) {
+            pause();
+            game.setResumed(false);
+            canResume = true;
         }
     }
 
@@ -149,7 +163,7 @@ public class GameScreen extends Screen {
         for (int i = 0; i < len; i++) {
             TouchEvent event = touchEvents.get(i);
 
-            if (event.type == TouchEvent.TOUCH_UP) {
+            if (event.type == TouchEvent.TOUCH_UP && playerState == PlayerState.Moving) {
                 // stop moving
                 kill_anim = true;
             } else {
@@ -161,9 +175,13 @@ public class GameScreen extends Screen {
                             lastDir = DIR_UP;
                             lastMove = System.currentTimeMillis();
                         }
-                        nextDir = DIR_UP;
                         if(can_move(posx, posy - 1)) {
+                            nextDir = DIR_UP;
                             playerState = PlayerState.Moving;
+                        } else if(playerState != PlayerState.Moving) {
+                            lastDir = DIR_UP;
+                        } else {
+                            kill_anim = true;
                         }
                     }
                 } else
@@ -175,9 +193,13 @@ public class GameScreen extends Screen {
                             lastDir = DIR_DOWN;
                             lastMove = System.currentTimeMillis();
                         }
-                        nextDir = DIR_DOWN;
                         if(can_move(posx, posy + 1)) {
+                            nextDir = DIR_DOWN;
                             playerState = PlayerState.Moving;
+                        } else if(playerState != PlayerState.Moving) {
+                            lastDir = DIR_DOWN;
+                        } else {
+                            kill_anim = true;
                         }
                     }
                 } else
@@ -189,9 +211,13 @@ public class GameScreen extends Screen {
                             lastDir = DIR_LEFT;
                             lastMove = System.currentTimeMillis();
                         }
-                        nextDir = DIR_LEFT;
                         if(can_move(posx - 1, posy)) {
+                            nextDir = DIR_LEFT;
                             playerState = PlayerState.Moving;
+                        } else if(playerState != PlayerState.Moving) {
+                            lastDir = DIR_LEFT;
+                        } else {
+                            kill_anim = true;
                         }
                     }
                 } else
@@ -203,9 +229,13 @@ public class GameScreen extends Screen {
                             lastDir = DIR_RIGHT;
                             lastMove = System.currentTimeMillis();
                         }
-                        nextDir = DIR_RIGHT;
                         if(can_move(posx + 1, posy)) {
+                            nextDir = DIR_RIGHT;
                             playerState = PlayerState.Moving;
+                        } else if(playerState != PlayerState.Moving) {
+                            lastDir = DIR_RIGHT;
+                        } else {
+                            kill_anim = true;
                         }
                     }
                 }
@@ -219,7 +249,6 @@ public class GameScreen extends Screen {
 
         if(kill_anim && playerState == PlayerState.Moving && System.currentTimeMillis() - lastMove >= move_period) {
             kill_anim = false;
-            nextDir = -1;
             playerState = PlayerState.Still;
             anim_offset = new int[]{0, 0};
             switch(lastDir) {
@@ -237,6 +266,10 @@ public class GameScreen extends Screen {
                     break;
                 default:
                     break;
+            }
+            if(nextDir >= 0) {
+                lastDir = nextDir;
+                nextDir = -1;
             }
         }
         // check moves
@@ -339,6 +372,7 @@ public class GameScreen extends Screen {
                     }
                 } else if(Util.inBoundsRel(event, 0.4375 /* 7 / 16 - center if width is 1 / 8 */, 0.875, 0.125, 0.125)) {
                     // menu button
+                    game.setState(1);
                     game.setScreen(Screens.mainMenuScreen);
                 } else if(Util.inBoundsRel(event, 0.875, 0.875, 0.125, 0.125)) {
                     // quit button
@@ -400,6 +434,8 @@ public class GameScreen extends Screen {
         }
         posx = x;
         posy = y;
+        game.setPosx(posx);
+        game.setPosy(posy);
     }
 
     private boolean can_move(int x, int y) {
@@ -560,12 +596,12 @@ public class GameScreen extends Screen {
 
     @Override
     public void resume() {
-        if(state == GameState.Paused) {
+        if(canResume) {
             state = GameState.Running;
-        }
-        lastResumed = System.currentTimeMillis();
+            lastResumed = lastmillis;
 
-        Assets.music.play();
+            Assets.music.play();
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.jed.game;
 
+import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;
 
@@ -24,6 +25,8 @@ public class Assets {
     public static List<Level>   levels   = new ArrayList<Level>();
 
     public static List<Setting> settings = new ArrayList<Setting>();
+
+    public static Bundle instanceState;
 
 /*    @Nullable
     public static Terrain getTerrain(String name) {
